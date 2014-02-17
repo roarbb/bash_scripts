@@ -1,0 +1,33 @@
+#!/bin/bash          
+echo Enter new domain name [without www.]:
+read DOMAIN
+
+domainPath="/var/www/$DOMAIN"
+
+echo "Making $domainPath directories ..."
+mkdir -p "$domainPath/logs"
+mkdir -p "$domainPath/public_html"
+
+echo "Making sites-available file ..."
+SITESAVAILABLE="<VirtualHost *:80>\n
+\tServerAdmin matej@sajgal.com\n
+\n
+\tDocumentRoot /var/www/$DOMAIN/public_html\n
+\tServerName www.$DOMAIN\n
+\tServerAlias $DOMAIN\n
+\t\n
+\tErrorLog /var/www/$DOMAIN/logs/error.log\n
+\t\n
+\t# Possible values include: debug, info, notice, warn, error, crit,\n
+\t# alert, emerg.\n
+\tLogLevel warn\n
+\t\n
+\tCustomLog /var/www/$DOMAIN/logs/access.log combined\n
+</VirtualHost>"
+
+echo -e $SITESAVAILABLE > /etc/apache2/sites-available/$DOMAIN
+
+echo "Making sites-enabled simlink ..."
+ln -s /etc/apache2/sites-available/$DOMAIN /etc/apache2/sites-enabled/$DOMAIN
+
+/etc/init.d/apache2 restart
