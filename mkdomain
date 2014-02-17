@@ -27,7 +27,9 @@ SITESAVAILABLE="<VirtualHost *:80>\n
 
 echo -e $SITESAVAILABLE > /etc/apache2/sites-available/$DOMAIN
 
-echo "Making sites-enabled simlink ..."
+echo -e "Making sites-enabled simlink ...\n"
 ln -s /etc/apache2/sites-available/$DOMAIN /etc/apache2/sites-enabled/$DOMAIN
 
 /etc/init.d/apache2 restart
+
+echo -e "\nDon't forget to add new domain in \nhttps://cloud.digitalocean.com/domains too."
