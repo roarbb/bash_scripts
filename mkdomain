@@ -1,4 +1,87 @@
 #!/bin/bash          
+
+while test $# -gt 0; do
+        case "$1" in
+                -h|--help)
+                        echo "This will help you. Not now. In the future."
+                        exit 0
+                        ;;
+                -s)
+                        echo "Enter subdomain name [sub.domain.tld]:"
+						read SUBDOMAIN
+
+						SUBFOLDER=${SUBDOMAIN/.*/}
+						echo $SUBFOLDER
+
+						DOMAIN=$(echo $SUBDOMAIN | cut -d"." -f2,3)
+						echo $DOMAIN
+
+						domainPath="/var/www/$DOMAIN/sub/$SUBFOLDER"
+
+						echo "Making $domainPath directories ..."
+						mkdir -p "$domainPath/logs"
+						mkdir -p "$domainPath/public_html"
+
+						echo "Making sites-available file ..."
+						SITESAVAILABLE="<VirtualHost *:80>\n
+						\tServerAdmin matej@sajgal.com\n
+						\n
+						\tDocumentRoot /var/www/$DOMAIN/sub/$SUBFOLDER/public_html\n
+						\tServerName $SUBFOLDER.$DOMAIN\n
+						\tServerAlias $SUBFOLDER.$DOMAIN\n
+						\t\n
+						\tErrorLog /var/www/$DOMAIN/sub/$SUBFOLDER/logs/error.log\n
+						\t\n
+						\t# Possible values include: debug, info, notice, warn, error, crit,\n
+						\t# alert, emerg.\n
+						\tLogLevel warn\n
+						\t\n
+						\tCustomLog /var/www/$DOMAIN/sub/$SUBFOLDER/logs/access.log combined\n
+						</VirtualHost>"
+
+						echo -e $SITESAVAILABLE > /etc/apache2/sites-available/$SUBDOMAIN
+
+						echo -e "Making sites-enabled simlink ...\n"
+						ln -s /etc/apache2/sites-available/$DOMAIN /etc/apache2/sites-enabled/$SUBDOMAIN
+
+						/etc/init.d/apache2 restart
+
+						echo -e "$(tput setaf 1)\nDon't forget to add new domain at \nhttps://cloud.digitalocean.com/domains too.$(tput sgr0)"
+
+						echo -e "\nMay I create MySQL database & user for your new domain $DOMAIN? [yes/no]"
+						read CANCREATEUSER
+
+						if [ "$CANCREATEUSER" == "yes" -o "$CANCREATEUSER" == "" ]
+						then
+							MYSQL=`which mysql`
+
+							DBNAME=${DOMAIN/.*/}$SUBFOLDER
+							DBUSER=$DBNAME
+							DBPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
+						 
+							Q1="CREATE DATABASE IF NOT EXISTS $DBNAME CHARACTER SET utf8 COLLATE utf8_general_ci;"
+							Q2="GRANT ALL ON $DBNAME.* TO '$DBUSER'@'localhost' IDENTIFIED BY '$DBPWD';"
+							Q3="FLUSH PRIVILEGES;"
+							SQL="${Q1}${Q2}${Q3}"
+							 
+							$MYSQL -uroot -p -e "$SQL"
+
+							echo "################################################"
+							echo "#"
+							echo -e "#     $(tput setaf 5)New Database: $(tput setaf 2)$DBNAME$(tput sgr0)"
+							echo -e "#     $(tput setaf 5)User: $(tput setaf 2)$DBUSER$(tput sgr0)"
+							echo -e "#     $(tput setaf 5)Pass: $(tput setaf 2)$DBPWD$(tput sgr0)"
+							echo "#"
+							echo "################################################"
+						else
+							echo "OK, bye!"
+						fi
+
+                        exit 0
+                        ;;
+        esac
+done
+
 echo "Enter new domain name [without www.]:"
 read DOMAIN
 
