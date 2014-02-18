@@ -1,5 +1,5 @@
 #!/bin/bash          
-echo Enter new domain name [without www.]:
+echo "Enter new domain name [without www.]:"
 read DOMAIN
 
 domainPath="/var/www/$DOMAIN"
@@ -32,4 +32,33 @@ ln -s /etc/apache2/sites-available/$DOMAIN /etc/apache2/sites-enabled/$DOMAIN
 
 /etc/init.d/apache2 restart
 
-echo -e "\nDon't forget to add new domain in \nhttps://cloud.digitalocean.com/domains too."
+echo -e "$(tput setaf 1)\nDon't forget to add new domain in \nhttps://cloud.digitalocean.com/domains too.$(tput sgr0)"
+
+echo -e "\nMay I create MySQL database & user for your new domain $DOMAIN? [yes/no]"
+read CANCREATEUSER
+
+if [ "$CANCREATEUSER" == "yes" -o "$CANCREATEUSER" == "" ]
+then
+	MYSQL=`which mysql`
+
+	DBNAME=${DOMAIN/.*/ }
+	DBUSER=$DBNAME
+	DBPWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
+ 
+	Q1="CREATE DATABASE IF NOT EXISTS $DBNAME CHARACTER SET utf8 COLLATE utf8_general_ci;"
+	Q2="GRANT ALL ON $DBNAME.* TO '$DBUSER'@'localhost' IDENTIFIED BY '$DBPWD';"
+	Q3="FLUSH PRIVILEGES;"
+	SQL="${Q1}${Q2}${Q3}"
+	 
+	$MYSQL -uroot -p -e "$SQL"
+
+	echo "################################################"
+	echo "#"
+	echo -e "#     $(tput setaf 5)New Database: $(tput setaf 2)$DBNAME$(tput sgr0)"
+	echo -e "#     $(tput setaf 5)User: $(tput setaf 2)$DBUSER$(tput sgr0)"
+	echo -e "#     $(tput setaf 5)Pass: $(tput setaf 2)$DBPWD$(tput sgr0)"
+	echo "#"
+	echo "################################################"
+else
+	echo "OK, bye!"
+fi
