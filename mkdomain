@@ -42,11 +42,9 @@ while test $# -gt 0; do
 						echo -e $SITESAVAILABLE > /etc/apache2/sites-available/$SUBDOMAIN
 
 						echo -e "Making sites-enabled simlink ...\n"
-						ln -s /etc/apache2/sites-available/$DOMAIN /etc/apache2/sites-enabled/$SUBDOMAIN
+						ln -s /etc/apache2/sites-available/$SUBDOMAIN /etc/apache2/sites-enabled/$SUBDOMAIN
 
 						/etc/init.d/apache2 restart
-
-						echo -e "$(tput setaf 1)\nDon't forget to add new domain at \nhttps://cloud.digitalocean.com/domains too.$(tput sgr0)"
 
 						echo -e "\nMay I create MySQL database & user for your new domain $DOMAIN? [yes/no]"
 						read CANCREATEUSER
