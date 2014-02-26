@@ -113,7 +113,10 @@ ln -s /etc/apache2/sites-available/$DOMAIN /etc/apache2/sites-enabled/$DOMAIN
 
 /etc/init.d/apache2 restart
 
-echo -e "$(tput setaf 1)\nDon't forget to add new domain at \nhttps://cloud.digitalocean.com/domains too.$(tput sgr0)"
+SERVERIP=$(ifconfig eth0|grep "inet addr:"|awk '{print $2}'|awk -F : '{print $2}')
+
+echo -e "$(tput setaf 1)\nDon't forget to add new domain at \nhttps://cloud.digitalocean.com/domains$(tput sgr0)"
+echo -e "$(tput setaf 1)and point domain A record to IP address $SERVERIP $(tput sgr0)"
 
 echo -e "\nMay I create MySQL database & user for your new domain $DOMAIN? [yes/no]"
 read CANCREATEUSER
